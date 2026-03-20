@@ -14,6 +14,7 @@ https://www.kaggle.com/code/mpwolke/australian-monthly-beer-production/input?sel
 5)Plot of components
 
 ## Decisons Made in Code
+- Manipulated data to only include the period of 1990-1995
 - Appended data to assume 1st of the month to make YYYY-MM-DD format for prophet use
 - Only Yearly Seasonality enabled 
 - Additive Mode as trend across data is consistent
