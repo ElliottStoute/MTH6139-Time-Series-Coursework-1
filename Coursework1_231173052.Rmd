@@ -1,0 +1,120 @@
+---
+title: "MTH6139 Time Series CW1" 
+subtitle: "Coursework 1 -- 231173052" 
+author: "Elliott Stoute" 
+date: "Spring term 2026" 
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab 
+    highlight: tango
+---
+
+```{r, echo=FALSE}
+# This code will display the QMUL logo at the top right of the page
+# Do not change this code
+htmltools::img(src = knitr::image_uri("images/QMlogo.png"),
+               alt = 'logo',
+               style = 'position:absolute; top:0; right:0; padding:10px; width:20%;')
+```
+
+# Section 0: Overview
+
+This is the MTH6139 Time Series Coursework 1 based on time series data of Australian Beer production from 1990 to 1995. I have done this using Meta's Prophet R package.Prophet is a forecasting package typically used for time series data.Data is in Mega Litres.
+
+# Section 1: R Code
+
+I ran "install.packages("remotes")" and "remotes::install_github('facebook/prophet\@\*release', subdir='R')" in the console first. Hence I have iused the latest version of Meta's Prophet.
+
+```{r,echo=FALSE}
+#' ---
+#' title: Time Series Coursework 1 231173052
+#' author: Elliott Stoute
+#' student number: 231173052    
+#' date: Today
+#' ---
+
+# 1. R Scratchpad ------------------------------------------------------------
+
+#Import, read and manipulate csv file data ----
+#reading data file, and creates data frame
+AusBeerProdRawData <- read.csv("monthly-beer-production-in-austr.csv",stringsAsFactors = FALSE)
+
+#appending ds column in csv file to first of each month in form YYYY-MM-DD to work with prophet format
+#assumed all dates in data occur on the first of each month for ease
+AusBeerProd <- data.frame(
+    ds = as.Date(paste0(AusBeerProdRawData$ds, "-01")),
+    y = as.numeric(AusBeerProdRawData$y)
+)
+
+#Fit Prophet Model ----
+AusBeerProdModel <- prophet::prophet(AusBeerProd, yearly.seasonality = TRUE,weekly.seasonality = FALSE, daily.seasonality = FALSE, seasonality.mode = "additive", changepoint.prior.scale = 0.05)
+#future dates creation
+Future_Dates <- prophet::make_future_dataframe(AusBeerProdModel, periods = 36, freq = "month")
+#make_future_dataframe() extends the ds column further
+#periods = 36 extends ds column to 36 months in future to 1998-01-01
+#Futuredates contains original data with additonal 36 data points
+
+#Forecast ----
+AusBeerProdForecast <- predict(AusBeerProdModel, Future_Dates)
+
+#Plot forecast ----
+plot(AusBeerProdModel, AusBeerProdForecast)
+# plots ds against y
+#Black dots are observations of concrete data
+#Solid line is the fitted line to data
+#Shaded area is the uncertainty band
+
+
+#Plot of components ----
+prophet::prophet_plot_components(AusBeerProdModel, AusBeerProdForecast)
+#Plots the trend and seasonality data
+#overall decline over period
+
+#Plot of raw data
+plot(AusBeerProd,type = "l", xlab ="Date", ylab="Beer Production in ML", main = "Australian Beer Production 1990-1995 (Monthly)")
+```
+
+## Section 1.1 Explanation
+
+I start out by loading the Meta Prophet package in R using the most updated version. Initially the data goes back to January 1956 but this was too large of a data set so I sub set the data to cover 1990-1995 (the last 5 years of the data). Then I had to edit the CSV file in excel to change the date label to ds and production header to y to fit the prophet format. And appending the date to then be YYYY-MM-DD by adding "-01" to the ds column which added the "-DD".
+
+Moving onto the use of Prophet, I use the prophet fucntion from the prophet library based on the AusBeerProd data with only Yearly seasonality being held TRUE. Use of additive seasonality as seasonality between trend cycle is consistent over the 5 years.
+
+FutureDates makes a data frame that adds 36 periods which is 36 months worth of data points to the beer data. The Predict function then uses such points and the fitted model to forecast future results.
+
+I then plot the forecast data and its components to compare seasonality.
+
+# Section 2: Plots
+
+## Section 2.1 Meta Prophet Plots
+
+```{r}
+plot(AusBeerProdModel, AusBeerProdForecast)
+prophet::prophet_plot_components(AusBeerProdModel, AusBeerProdForecast)
+```
+
+## Section 2.2 Raw Data Plot
+
+```{r}
+#Plot of raw data
+plot(AusBeerProd,type = "l", xlab ="Date", ylab="Beer Production in ML", main = "Australian Beer Production 1990-1995 (Monthly)")
+```
+
+## Section 2.3 Explanation of Plots
+
+Plot 1: Plots the raw data points(Black Dots), Fitted Model & Forecast (Solid Blue Line) and Uncertainty area (Shaded Blue). There are only 5 raw data points that sit outside the uncertainty between Jan 1990 and Jan 1995 (61 data points). We see peaks at the May & Sep-Nov period and the forecast continues this trend with overall decline in peak values over the full 8 year term.
+
+Plot 2: Plots the trend and yearly seasonality. The overall trend is a steady long term decline in beer production likely caused by consumer taste changes and economic factors such as a recession. In terms of yearly seasonality peaks at May & Sep-Nov which marks autumn into winter seasons and spring into summer respectively. As expected beer consumption would increase in a summer period as weather heats up and in periods of poorer weather as more people gather indoors together.
+
+Plot 3: The raw data shows strong seasonality at the end of each year in the summer/holiday period of Christmas and New Years. As well as a steady decline in peak volume produced monthly year-on-year.
+
+# Links
+
+-   Intro to Prophet: <https://facebook.github.io/prophet/docs/quick_start.html#r-api>
+-   Project GitHub: <https://github.com/ElliottStoute/MTH6139-Time-Series-Coursework-1>
+-   Data Source: <https://www.kaggle.com/code/mpwolke/australian-monthly-beer-production/input?select=dataset>
+-   Datacamp course: <https://www.datacamp.com/courses/reporting-with-rmarkdown>
+-   RStudio reference: <https://rmarkdown.rstudio.com/lesson-1.html>
+-   More sophisticated reference: <https://bookdown.org/yihui/rmarkdown/>
